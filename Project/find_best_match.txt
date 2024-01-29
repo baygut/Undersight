@@ -1,0 +1,71 @@
+Import Statements
+python
+Copy code
+import cv2
+import os
+import numpy as np
+from skimage.metrics import structural_similarity as ssim
+cv2: OpenCV library for computer vision tasks.
+os: Operating System module for interacting with the file system.
+numpy: Numerical computing library for efficient array operations.
+structural_similarity: Part of the scikit-image library, used for comparing images based on structural similarity.
+Image Comparison Functions
+python
+Copy code
+def mse(image1, image2):
+    err = np.sum((image1.astype("float") - image2.astype("float")) ** 2)
+    err /= float(image1.shape[0] * image1.shape[1])
+    return err
+mse: Mean Squared Error function, a measure of the average squared difference between corresponding pixels of two images.
+python
+Copy code
+def compare_images(image1, image2):
+    image1 = cv2.resize(image1, (300, 300))
+    image2 = cv2.resize(image2, (300, 300))
+
+    gray_image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    gray_image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+    ssi_index, _ = ssim(gray_image1, gray_image2, full=True)
+    mse_value = mse(gray_image1, gray_image2)
+
+    return ssi_index, mse_value
+compare_images: Resizes input images, converts them to grayscale, and calculates Structural Similarity Index (SSI) and Mean Squared Error (MSE) between the images.
+Find Best Match Function
+python
+Copy code
+def find_best_match(input_image, image_folder):
+    input_image = cv2.imread(input_image)
+    input_image = cv2.resize(input_image, (300, 300))
+    input_gray = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+
+    best_match = None
+    best_similarity = float('-inf')
+
+    for filename in os.listdir(image_folder):
+        filepath = os.path.join(image_folder, filename)
+
+        if os.path.isfile(filepath) and filepath.lower().endswith(('.png', '.jpg', '.jpeg')):
+            compared_image = cv2.imread(filepath)
+            ssi_index, _ = compare_images(input_image, compared_image)
+
+            if ssi_index > best_similarity:
+                best_similarity = ssi_index
+                best_match = filepath
+
+    return best_match, best_similarity
+find_best_match: Takes an input image and a folder containing images. Compares the input image with each image in the folder using the compare_images function, and returns the file path and SSI of the best-matching image.
+Main Block
+python
+Copy code
+if __name__ == "__main__":
+    input_image_path = "sus4.jpg"
+    images_folder_path = "database"
+
+    best_match_image, similarity = find_best_match(input_image_path, images_folder_path)
+
+    print(f"Best match: {best_match_image}")
+    print(f"Structural Similarity Index: {similarity}")
+Main Block: Uses the find_best_match function to find the best match for the input image in the specified folder and prints the result.
+Summary
+The code is designed to compare an input image with a set of images in a folder based on Structural Similarity Index (SSI) and Mean Squared Error (MSE). It then identifies the best-matching image and prints its file path and the corresponding SSI value. The code relies on the OpenCV and scikit-image libraries for image processing and comparison.
